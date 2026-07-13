@@ -16,4 +16,4 @@ font = "sans serif"
 fastReruns = true
 
 [client]
-showErrorDetails = true
+showErrorDetails = false

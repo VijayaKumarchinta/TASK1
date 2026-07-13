@@ -16,6 +16,8 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 import streamlit as st
+from src.cleaner import NetflixCleaner
+from src.utils import CleaningLogger
 
 # ── Page config (MUST be first Streamlit command) ──
 st.set_page_config(
@@ -27,6 +29,7 @@ st.set_page_config(
 
 # ── Constants ──
 DATA_PATH = "data/cleaned/netflix_titles_cleaned.csv"
+RAW_PATH = "data/raw/netflix_titles.csv"
 NETFLIX_RED = "#E50914"
 NETFLIX_DARK = "#221F1F"
 NETFLIX_LIGHT = "#F5F5F5"
@@ -36,17 +39,59 @@ MONTH_ORDER = [
 ]
 
 
-# ── Data Loading ──
+# ── Data Loading (with auto-pipeline fallback) ──
+# NOTE: @st.cache_data functions MUST be pure — NO st.* UI calls allowed inside them!
 @st.cache_data(show_spinner="Loading Netflix data...")
+def _load_data_cached() -> pd.DataFrame:
+    """Cached pure function — loads CSV or auto-generates from Kaggle."""
+    # Try 1: Load already-cleaned CSV (tracked in git)
+    if os.path.exists(DATA_PATH):
+        df = pd.read_csv(DATA_PATH)
+        if "date_added" in df.columns:
+            df["date_added"] = pd.to_datetime(df["date_added"], errors="coerce")
+        return df
+
+    # Try 2: Download from Kaggle and run cleaning pipeline
+    try:
+        import kagglehub
+        path = kagglehub.dataset_download("shivamb/netflix-shows")
+        import shutil
+        os.makedirs("data/raw", exist_ok=True)
+        for f in os.listdir(path):
+            if f.endswith(".csv"):
+                shutil.copy(os.path.join(path, f), RAW_PATH)
+
+        # Run the cleaning pipeline
+        os.makedirs("data/cleaned", exist_ok=True)
+        logger = CleaningLogger()
+        cleaner = NetflixCleaner(logger)
+        raw_df = pd.read_csv(RAW_PATH)
+        cleaned_df = cleaner.run_full_pipeline(raw_df.copy())
+        cleaned_df.to_csv(DATA_PATH, index=False)
+
+        if "date_added" in cleaned_df.columns:
+            cleaned_df["date_added"] = pd.to_datetime(cleaned_df["date_added"], errors="coerce")
+        return cleaned_df
+    except Exception as e:
+        raise RuntimeError(f"Could not load data automatically: {e}")
+
+
 def load_data() -> pd.DataFrame:
-    if not os.path.exists(DATA_PATH):
-        st.error(f"Cleaned data not found at {DATA_PATH}. Run the pipeline first: `python run.py`")
+    """Non-cached wrapper — handles UI messages around cached data loading."""
+    try:
+        return _load_data_cached()
+    except RuntimeError as e:
+        st.error(str(e))
+        st.markdown(
+            """
+            ### Manual Setup:
+            1. Run `python run.py` locally to generate the cleaned dataset
+            2. Commit and push the generated file to GitHub
+            3. Or download from [Kaggle](https://www.kaggle.com/datasets/shivamb/netflix-shows)
+               and place in `data/raw/netflix_titles.csv`
+            """
+        )
         st.stop()
-    df = pd.read_csv(DATA_PATH)
-    # Parse dates
-    if "date_added" in df.columns:
-        df["date_added"] = pd.to_datetime(df["date_added"], errors="coerce")
-    return df
 
 
 # ── Sidebar ──
