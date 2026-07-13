@@ -694,8 +694,107 @@ def page_quality(df: pd.DataFrame):
             st.text(report_text)
 
 
+# ── Floating Background ──
+def render_floating_background():
+    """Render an animated floating particle background behind the dashboard."""
+    st.markdown(
+        f"""
+        <style>
+        /* Floating particle background */
+        .floating-bg {{
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            overflow: hidden;
+            pointer-events: none;
+            background: linear-gradient(180deg, #FFF8F8 0%, #FFFFFF 50%, #FFF0F0 100%);
+        }}
+        .floating-particle {{
+            position: absolute;
+            border-radius: 50%;
+            background: radial-gradient(circle at 30% 30%, rgba(229, 9, 20, 0.15), rgba(229, 9, 20, 0.05));
+            animation: float-up linear infinite;
+            opacity: 0;
+        }}
+        @keyframes float-up {{
+            0% {{
+                transform: translateY(100vh) scale(0.3) rotate(0deg);
+                opacity: 0;
+            }}
+            10% {{
+                opacity: 0.8;
+            }}
+            50% {{
+                transform: translateY(50vh) scale(1.2) rotate(180deg);
+                opacity: 0.4;
+            }}
+            90% {{
+                opacity: 0.6;
+            }}
+            100% {{
+                transform: translateY(-10vh) scale(0.5) rotate(360deg);
+                opacity: 0;
+            }}
+        }}
+        /* Respect reduced motion preference */
+        @media (prefers-reduced-motion: reduce) {{
+            .floating-particle {{
+                animation: none;
+                display: none;
+            }}
+        }}
+        /* Streamlit content — transparent background to show particles */
+        .stApp {{
+            background: transparent;
+        }}
+        .main > div {{
+            background: transparent;
+        }}
+        section[data-testid="stSidebar"] {{
+            background: rgba(255, 255, 255, 0.92);
+            backdrop-filter: blur(10px);
+        }}
+        .element-container {{
+            background: transparent;
+        }}
+        /* Card-like containers for content */
+        div[data-testid="stMetricValue"] {{
+            background: rgba(255, 255, 255, 0.7);
+            border-radius: 8px;
+            padding: 4px 8px;
+        }}
+        div[data-testid="stDataFrame"] {{
+            background: rgba(255, 255, 255, 0.85);
+            border-radius: 8px;
+        }}
+        </style>
+        <div class="floating-bg">
+            <div class="floating-particle" style="width:80px;height:80px;left:5%;animation-duration:22s;animation-delay:0s;"></div>
+            <div class="floating-particle" style="width:50px;height:50px;left:15%;animation-duration:18s;animation-delay:3s;"></div>
+            <div class="floating-particle" style="width:100px;height:100px;left:30%;animation-duration:25s;animation-delay:1s;"></div>
+            <div class="floating-particle" style="width:40px;height:40px;left:45%;animation-duration:15s;animation-delay:5s;"></div>
+            <div class="floating-particle" style="width:70px;height:70px;left:55%;animation-duration:20s;animation-delay:2s;"></div>
+            <div class="floating-particle" style="width:55px;height:55px;left:68%;animation-duration:17s;animation-delay:7s;"></div>
+            <div class="floating-particle" style="width:90px;height:90px;left:78%;animation-duration:23s;animation-delay:4s;"></div>
+            <div class="floating-particle" style="width:45px;height:45px;left:90%;animation-duration:19s;animation-delay:6s;"></div>
+            <div class="floating-particle" style="width:65px;height:65px;left:10%;animation-duration:21s;animation-delay:9s;"></div>
+            <div class="floating-particle" style="width:75px;height:75px;left:40%;animation-duration:16s;animation-delay:8s;"></div>
+            <div class="floating-particle" style="width:35px;height:35px;left:60%;animation-duration:14s;animation-delay:11s;"></div>
+            <div class="floating-particle" style="width:85px;height:85px;left:82%;animation-duration:24s;animation-delay:10s;"></div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
 # ── Main App ──
 def main():
+    # Inject floating animated background
+    render_floating_background()
+
     # Load data
     df = load_data()
 
