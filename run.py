@@ -20,7 +20,8 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 import pandas as pd
 from src.cleaner import NetflixCleaner
-from src.utils import CleaningLogger, describe_dataframe_basics, get_hashable_cols
+from src.utils import (CleaningLogger, describe_dataframe_basics,
+                                export_to_excel, get_hashable_cols)
 from src.visualizer import NetflixVisualizer, generate_comparison_report
 
 
@@ -49,6 +50,11 @@ Examples:
         "--no-charts",
         action="store_true",
         help="Skip chart generation",
+    )
+    parser.add_argument(
+        "--no-excel",
+        action="store_true",
+        help="Skip Excel export (CSV only)",
     )
     parser.add_argument(
         "--save-cleaned",
@@ -110,12 +116,16 @@ def main():
     print(f"  [DUPLICATES] Before: {dup_before} | After: {dup_after}")
     print(f"\n  [OK] Dataset shape: {cleaned_df.shape[0]:,} rows x {cleaned_df.shape[1]} columns")
 
-    # Step 5: Save Cleaned Data
+    # Step 5: Save Cleaned Data (CSV + Excel)
     header("STEP 5: SAVING CLEANED DATA")
     cleaned_df.to_csv(args.save_cleaned, index=False)
     file_size_mb = os.path.getsize(args.save_cleaned) / 1e6
-    print(f"  [SAVED] Cleaned data -> {args.save_cleaned}")
-    print(f"  [INFO] File size: {file_size_mb:.2f} MB")
+    print(f"  [CSV] Cleaned data -> {args.save_cleaned}")
+    print(f"  [INFO] CSV file size: {file_size_mb:.2f} MB")
+
+    if not args.no_excel:
+        excel_path = str(Path(args.save_cleaned).with_suffix('.xlsx'))
+        export_to_excel(cleaned_df, excel_path)
 
     # Step 6: Generate Charts
     if not args.no_charts:

@@ -5,9 +5,12 @@ Handles logging, reporting, and helper utilities.
 
 import json
 import os
+import sys
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional
+
+import pandas as pd
 
 
 class NumpyEncoder(json.JSONEncoder):
@@ -111,6 +114,87 @@ def get_hashable_cols(df) -> list:
     """Return columns that contain only hashable types (not lists/dicts)."""
     return [c for c in df.columns
             if df[c].apply(lambda x: isinstance(x, (list, dict))).sum() == 0]
+
+
+def export_to_excel(df, filepath: str, sheet_name: str = "Netflix_Cleaned") -> str:
+    """
+    Export a DataFrame to a nicely formatted Excel file.
+
+    Features:
+      - Auto-adjusted column widths
+      - Bold header row with Netflix-red background
+      - White text on headers
+      - Alternating row colors for readability
+      - Freeze panes on header row
+      - Auto-filter enabled on all columns
+    """
+    try:
+        import openpyxl
+        from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
+        from openpyxl.utils import get_column_letter
+    except ImportError:
+        print("  [WARN] openpyxl not installed. Installing...")
+        import subprocess
+        subprocess.check_call([sys.executable, "-m", "pip", "install", "openpyxl", "-q"])
+        import openpyxl
+        from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
+        from openpyxl.utils import get_column_letter
+
+    ensure_dir(os.path.dirname(filepath))
+
+    # Write to Excel with openpyxl engine for full formatting control
+    with pd.ExcelWriter(filepath, engine="openpyxl") as writer:
+        df.to_excel(writer, sheet_name=sheet_name, index=False)
+        workbook = writer.book
+        worksheet = writer.sheets[sheet_name]
+
+        # --- Styling constants ---
+        header_fill = PatternFill(start_color="E50914", end_color="E50914", fill_type="solid")
+        header_font = Font(name="Calibri", bold=True, color="FFFFFF", size=11)
+        header_alignment = Alignment(horizontal="center", vertical="center", wrap_text=True)
+        thin_border = Border(
+            left=Side(style="thin", color="D0D0D0"),
+            right=Side(style="thin", color="D0D0D0"),
+            top=Side(style="thin", color="D0D0D0"),
+            bottom=Side(style="thin", color="D0D0D0"),
+        )
+        even_fill = PatternFill(start_color="F5F5F5", end_color="F5F5F5", fill_type="solid")
+        odd_fill = PatternFill(start_color="FFFFFF", end_color="FFFFFF", fill_type="solid")
+
+        # --- Style header row ---
+        for col_idx, col_name in enumerate(df.columns, 1):
+            cell = worksheet.cell(row=1, column=col_idx)
+            cell.fill = header_fill
+            cell.font = header_font
+            cell.alignment = header_alignment
+            cell.border = thin_border
+
+        # --- Style data rows (alternating colors + borders) ---
+        for row_idx in range(2, len(df) + 2):
+            fill = even_fill if row_idx % 2 == 0 else odd_fill
+            for col_idx in range(1, len(df.columns) + 1):
+                cell = worksheet.cell(row=row_idx, column=col_idx)
+                cell.fill = fill
+                cell.border = thin_border
+                cell.alignment = Alignment(vertical="center")
+
+        # --- Auto-fit column widths (capped at 50) ---
+        for col_idx, col_name in enumerate(df.columns, 1):
+            # Get max length in column (header + data)
+            max_len = len(str(col_name))
+            for row_idx in range(2, min(len(df) + 2, 100)):  # Sample first 100 rows for speed
+                cell_val = str(worksheet.cell(row=row_idx, column=col_idx).value or "")
+                max_len = max(max_len, len(cell_val))
+            adjusted_width = min(max_len + 2, 50)
+            worksheet.column_dimensions[get_column_letter(col_idx)].width = adjusted_width
+
+        # --- Freeze header row & add auto-filter ---
+        worksheet.freeze_panes = "A2"
+        worksheet.auto_filter.ref = f"A1:{get_column_letter(len(df.columns))}{len(df) + 1}"
+
+    file_size_kb = os.path.getsize(filepath) / 1e3
+    print(f"  [EXCEL] Saved styled Excel -> {filepath} ({file_size_kb:.1f} KB)")
+    return filepath
 
 
 def ensure_dir(path: str) -> None:
