@@ -30,6 +30,5 @@ data/raw/
 # Output (reports and charts can be regenerated)
 output/
 
-# Windows reserved device names
+# Windows reserved device name
 nul
-NUL
