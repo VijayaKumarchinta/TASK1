@@ -1,0 +1,19 @@
+[browser]
+gatherUsageStats = false
+
+[server]
+maxUploadSize = 10
+maxMessageSize = 200
+
+[theme]
+primaryColor = "#E50914"
+backgroundColor = "#FFFFFF"
+secondaryBackgroundColor = "#F5F5F5"
+textColor = "#221F1F"
+font = "sans serif"
+
+[runner]
+fastReruns = true
+
+[client]
+showErrorDetails = false

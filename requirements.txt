@@ -8,6 +8,10 @@ numpy>=1.23.0
 # Visualization
 matplotlib>=3.6.0
 seaborn>=0.12.0
+plotly>=5.14.0
+
+# Dashboard (Streamlit Cloud ready)
+streamlit>=1.28.0
 
 # Kaggle dataset download (optional — dataset can be downloaded manually)
 kagglehub>=0.1.0
