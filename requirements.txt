@@ -1,0 +1,16 @@
+# Netflix Data Cleaning Pipeline — Dependencies
+# Python 3.8+ recommended
+
+# Core data manipulation
+pandas>=1.5.0
+numpy>=1.23.0
+
+# Visualization
+matplotlib>=3.6.0
+seaborn>=0.12.0
+
+# Kaggle dataset download (optional — dataset can be downloaded manually)
+kagglehub>=0.1.0
+
+# File handling
+openpyxl>=3.0.0  # For Excel export support (bonus)

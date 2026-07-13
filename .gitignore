@@ -1,0 +1,35 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+*.egg
+
+# Virtual environment
+venv/
+.venv/
+env/
+ENV/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+*.log
+
+# Data (raw data is too large for GitHub - download instructions in README)
+data/raw/
+
+# Output (reports and charts can be regenerated)
+output/
+
+# Windows reserved device names
+nul
+NUL
